@@ -14,7 +14,6 @@ export default function HomePage() {
       {/* Chat area */}
        <div className='mt-28 text-left flex justify-center flex-col items-center'>
 
-
           <h1 style={{wordSpacing:'0.1em', letterSpacing:'0.06em'}} className='text-xl font-[600]'>Chat With Solana Blockchain</h1>
           <p className='text-sm text-[#ffffff82]'>A tool to help you perform task on blockchain using nlp.</p>
 
@@ -45,23 +44,35 @@ export default function HomePage() {
       </main>
 
       {/* Input area */}
-      <div className='relative'>
-        <form className=" p-1 flex gap-3 shadow-lg border-3 border-zinc-700/40 absolute justify-center items-center bottom-96 left-1/2 transform -translate-x-1/2 bg-[#202225] rounded-full w-[90%] max-w-lg">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask something like 'Send 1 SOL to ...'"
-          className="flex-1 px-4 py-3 rounded-xl  focus:outline-none "
-        />
-        <button
-          type="submit"
-          className="bg-gradient-to-r from-green-300 to-green-800  px-2 py-2 mr-1 rounded-full transition-all"
-        >
-          <Send  className='text-[#ffffffda]'/>
-        </button>
-      </form>
-      </div>
+     <div className='relative'>
+      <div className='w-80 h-20 bg-green-400  bottom-[380px] rounded-full left-[620px] blur-[70px]  -z-10 absolute '></div>
+  <form className="
+    p-1 flex gap-3
+    shadow-[0_10px_30px_rgba(0,0,0,0.6)]
+    border border-zinc-600
+    absolute justify-center items-center
+    bottom-96 left-1/2 transform -translate-x-1/2
+    bg-[#202225] rounded-full
+    w-[90%] max-w-lg
+    ring-1 ring-white/10
+    backdrop-blur-sm
+  ">
+    <input
+      type="text"
+      value={input}
+      onChange={(e) => setInput(e.target.value)}
+      placeholder="Ask something like 'Send 1 SOL to ...'"
+      className="flex-1 px-4 py-3 rounded-xl text-white placeholder-zinc-400 focus:outline-none"
+    />
+    <button
+      type="submit"
+      className="bg-gradient-to-r from-green-300 to-green-800 px-3 py-2 mr-1 rounded-full text-white"
+    >
+      <Send className='text-white' />
+    </button>
+  </form>
+</div>
+
 
     </div>
   );
