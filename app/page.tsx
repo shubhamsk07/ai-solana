@@ -1,103 +1,78 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useState } from 'react';
+import Navbar from './components/Navbar';
+import { Send } from 'lucide-react';
+
+export default function HomePage() {
+  const [input, setInput] = useState('');
+  const [messages, setMessages] = useState<string[]>([]);
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="h-screen flex flex-col text-[#ffffffe9] ">
+      <Navbar />
+      {/* Chat area */}
+       <div className='mt-28 text-left flex justify-center flex-col items-center'>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+          <h1 style={{wordSpacing:'0.1em', letterSpacing:'0.06em'}} className='text-xl font-[600]'>Chat With Solana Blockchain</h1>
+          <p className='text-sm text-[#ffffff82]'>A tool to help you perform task on blockchain using nlp.</p>
+
+        </div>
+      <main className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+
+        {messages.map((msg, i) => (
+          <div
+            key={i}
+            className={`max-w-lg px-4 py-3 rounded-lg shadow-md ${
+              msg.startsWith('🧑')
+                ? 'ml-auto bg-blue-500 text-white'
+                : 'mr-auto bg-gray-200'
+            }`}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            {msg}
+          </div>
+        ))}
+
+          <div className='flex items-center justify-center mt-28 gap-3 flex-wrap max-w-md mx-auto '>
+        <Item text="Send 1 SOL" />
+        <Item text="Show My Balance" />
+        <Item text="Show My NFT" />
+        <Item text="1SOL Value in USDT" />
+        <Item text="Create a token" />
+         <Item text="Price of NFT" />
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+
+      {/* Input area */}
+      <div className='relative'>
+        <form className=" p-1 flex gap-3 shadow-lg border-3 border-zinc-700/40 absolute justify-center items-center bottom-96 left-1/2 transform -translate-x-1/2 bg-[#202225] rounded-full w-[90%] max-w-lg">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Ask something like 'Send 1 SOL to ...'"
+          className="flex-1 px-4 py-3 rounded-xl  focus:outline-none "
+        />
+        <button
+          type="submit"
+          className="bg-gradient-to-r from-green-300 to-green-800  px-2 py-2 mr-1 rounded-full transition-all"
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <Send  className='text-[#ffffffda]'/>
+        </button>
+      </form>
+      </div>
+
     </div>
   );
+}
+
+
+function Item({text}: {text: string}) {
+  return(
+      <div
+
+      className='text-xs text-center  bg-green-800/30 text-green-500 w-fit rounded-full px-2 py-1 border-green-400 border-1 items-center flex justify-center'
+      >{text}</div>
+  )
 }
