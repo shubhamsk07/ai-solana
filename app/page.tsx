@@ -6,7 +6,7 @@ import { Send } from 'lucide-react';
 
 export default function HomePage() {
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<string[]>([]);
+  // const [messages, setMessages] = useState<string[]>([]);
 
   return (
     <div className="h-screen flex flex-col text-[#ffffffe9] ">
@@ -20,18 +20,7 @@ export default function HomePage() {
         </div>
       <main className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
 
-        {messages.map((msg, i) => (
-          <div
-            key={i}
-            className={`max-w-lg px-4 py-3 rounded-lg shadow-md ${
-              msg.startsWith('🧑')
-                ? 'ml-auto bg-blue-500 text-white'
-                : 'mr-auto bg-gray-200'
-            }`}
-          >
-            {msg}
-          </div>
-        ))}
+
 
           <div className='flex items-center justify-center mt-28 gap-3 flex-wrap max-w-md mx-auto '>
         <Item text="Send 1 SOL" />
