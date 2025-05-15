@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import Navbar from './components/Navbar';
-import { Metaplex, keypairIdentity } from "@metaplex-foundation/js";
-import { Circle, Command, Pause, Send } from 'lucide-react';
+import { Metaplex,  } from "@metaplex-foundation/js";
+import { Circle, Send } from 'lucide-react';
 import axios from 'axios';
 import { motion } from "framer-motion"
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Connection, LAMPORTS_PER_SOL, PublicKey, sendAndConfirmTransaction, SystemProgram, Transaction } from '@solana/web3.js';
+import { Connection, LAMPORTS_PER_SOL, PublicKey,  SystemProgram, Transaction } from '@solana/web3.js';
 const connection = new Connection('https://api.testnet.solana.com', 'confirmed');
 const metaplex = Metaplex.make(connection);
 const exampleCommands = [
@@ -28,7 +28,7 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false)
   async function fetchNFTCount(publicKey: PublicKey): Promise<number> {
     // Fetch NFTs owned by the wallet address
-    const nfts = await metaplex.nfts().findAllByOwner(publicKey);
+    const nfts = await metaplex.nfts().findAllByOwner({owner:publicKey});
     return nfts.length;
   }
   const hanldeSubmit = async () => {
