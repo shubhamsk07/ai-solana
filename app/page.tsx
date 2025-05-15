@@ -11,12 +11,10 @@ import { Connection, LAMPORTS_PER_SOL, PublicKey, sendAndConfirmTransaction, Sys
 const connection = new Connection('https://api.testnet.solana.com', 'confirmed');
 const metaplex = Metaplex.make(connection);
 const exampleCommands = [
-  "Send 1 SOL To BoB",
+  "Send 0.1 SOL To address",
   "Show My Balance",
-  "How many NFT do I have",
-  "1SOL Value in USDT",
-  "Create a token xyz coin",
-  "Price of NFT"
+  "airdop 1 SOL",
+  "show transaction history"
 ];
 
 type Message = { role: string; text: string };
@@ -264,18 +262,18 @@ export default function HomePage() {
         {view === 'landing' && (
           <div className='w-96 h-30 bg-radial from-green-600 via-green-600 shadow-2xl to-blue-500  rounded-full  right-1/2 -top-36 translate-y-1/2 transform translate-x-1/2 blur-[100px] -z-10 absolute '></div>
         )}
-       <motion.div
-  initial={{ y: 50, opacity: 0 }}
-  animate={{ y: 0, opacity: 1 }}
-  transition={{ duration: 0.4, ease: 'easeOut' }}
-  className="fixed bottom-4 w-full flex flex-col items-center z-50"
->
-  {view === 'landing' && (
-    <div className="w-96 h-30 bg-radial from-green-600 via-green-600 shadow-2xl to-blue-500 rounded-full right-1/2 -top-36 translate-y-1/2 transform translate-x-1/2 blur-[100px] -z-10 absolute"></div>
-  )}
+        <motion.div
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          className="fixed bottom-4 w-full flex flex-col items-center z-50"
+        >
+          {view === 'chat' && (
+            <div className="w-96 h-30 bg-radial from-green-600 via-green-600 shadow-2xl to-blue-500 rounded-full right-1/2 -top-36 translate-y-1/2 transform translate-x-1/2 blur-[100px] -z-10 absolute"></div>
+          )}
 
-  <div
-    className="
+          <div
+            className="
       p-1 flex gap-3
       shadow-[0_10px_30px_rgba(0,0,0,0.6)]
       border border-zinc-600
@@ -285,24 +283,23 @@ export default function HomePage() {
       ring-1 ring-white/10
       backdrop-blur-sm
     "
-  >
-    <input
-      type="text"
-      value={prompt}
-      onChange={(e) => setPrompt(e.target.value)}
-      placeholder="Ask something like 'Send 1 SOL to ...'"
-      className="flex-1 px-6 py-4 rounded-xl text-white text-sm placeholder-zinc-400 focus:outline-none bg-transparent"
-    />
-    <button
-      type="submit"
-      onClick={hanldeSubmit}
-      className="bg-gradient-to-r from-green-300 to-green-800 hover:from-green-400 hover:border-green-400 border-green-100 px-2 py-2 mr-[6px] rounded-full text-white cursor-pointer"
-    >
-      {isLoading ? <Circle className="text-white/70" /> : <Send className="text-white/70" />}
-    </button>
-  </div>
-</motion.div>
-
+          >
+            <input
+              type="text"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Ask something like 'Send 1 SOL to ...'"
+              className="flex-1 px-6 py-4 rounded-xl text-white text-sm placeholder-zinc-400 focus:outline-none bg-transparent"
+            />
+            <button
+              type="submit"
+              onClick={hanldeSubmit}
+              className="bg-gradient-to-r from-green-300 to-green-800 hover:from-green-400 hover:border-green-400 border-green-100 px-2 py-2 mr-[6px] rounded-full text-white cursor-pointer"
+            >
+              {isLoading ? <Circle className="text-white/70" /> : <Send className="text-white/70" />}
+            </button>
+          </div>
+        </motion.div>
         {
           view === 'landing' && (
             <div className='flex items-center justify-center mt-4 gap-3 flex-wrap max-w-md mx-auto '>
