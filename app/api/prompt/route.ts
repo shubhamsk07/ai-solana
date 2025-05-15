@@ -13,7 +13,7 @@ const config = {
 };
 const model = "gemini-1.5-flash";
 
-export  async function POST(req: NextRequest,res:NextResponse) {
+export async function POST(req: NextRequest) {
   const { prompt } = await req.json();
 
 const systemPrompt = `
