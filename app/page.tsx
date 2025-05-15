@@ -2,77 +2,331 @@
 
 import { useState } from 'react';
 import Navbar from './components/Navbar';
-import { Send } from 'lucide-react';
+import { Metaplex, keypairIdentity } from "@metaplex-foundation/js";
+import { Circle, Command, Pause, Send } from 'lucide-react';
+import axios from 'axios';
+import { motion } from "framer-motion"
+import { useWallet } from '@solana/wallet-adapter-react';
+import { Connection, LAMPORTS_PER_SOL, PublicKey, sendAndConfirmTransaction, SystemProgram, Transaction } from '@solana/web3.js';
+const connection = new Connection('https://api.testnet.solana.com', 'confirmed');
+const metaplex = Metaplex.make(connection);
+const exampleCommands = [
+  "Send 1 SOL To BoB",
+  "Show My Balance",
+  "How many NFT do I have",
+  "1SOL Value in USDT",
+  "Create a token xyz coin",
+  "Price of NFT"
+];
 
+type Message = { role: string; text: string };
 export default function HomePage() {
-  const [input, setInput] = useState('');
-  // const [messages, setMessages] = useState<string[]>([]);
+  const [prompt, setPrompt] = useState('');
+  const { publicKey } = useWallet();
+  const wallet = useWallet()
+  const [view, setView] = useState<'landing' | 'chat'>('landing')
+  const [messages, setMessages] = useState<Message[]>([])
+
+  const [isLoading, setIsLoading] = useState(false)
+  async function fetchNFTCount(publicKey: PublicKey): Promise<number> {
+    // Fetch NFTs owned by the wallet address
+    const nfts = await metaplex.nfts().findAllByOwner(publicKey);
+    return nfts.length;
+  }
+  const hanldeSubmit = async () => {
+    setIsLoading(true)
+    setView('chat')
+    setMessages((prev) => [...prev, { role: 'user', text: prompt }])
+    setPrompt('')
+    const response = await axios.post("/api/prompt", {
+      prompt: prompt
+    })
+    setIsLoading(false)
+    const data = response.data.message
+    const cleaned = data.replace(/```json|```/g, '').trim();
+
+    let parsed;
+    try {
+      parsed = JSON.parse(cleaned);
+      const command = parsed.command
+      const message = parsed.message
+      const amount = parsed.amount
+      setMessages((prev) => [...prev, { role: 'system', text: message }])
+      if (!publicKey) {
+        setMessages((prev) => [
+          ...prev,
+          { role: 'system', text: '❌ Wallet not connected. Please connect your wallet.' }
+        ]);
+        return;
+      }
+      else if (command === 'get_balance') {
+        try {
+
+          const lamports = await connection.getBalance(publicKey);
+          const sol = lamports / 1e9;
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', text: `💰 Your balance is ${sol.toFixed(4)} SOL.` }
+          ]);
+        } catch (error) {
+          console.error('Balance fetch failed:', error);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', text: '❌ Failed to fetch balance.' }
+          ]);
+        }
+      }
+      else if (command === 'airdrop') {
+        try {
+          if (!publicKey) {
+            setMessages((prev) => [
+              ...prev,
+              { role: 'system', text: '❌ Wallet not connected. Please connect your wallet.' }
+            ]);
+            return;
+          }
+
+          // Request airdrop of 1 SOL
+          const signature = await connection.requestAirdrop(publicKey, LAMPORTS_PER_SOL * amount);
+          await connection.confirmTransaction(signature, 'confirmed');
+
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', text: '✅ Airdrop successful! You received 1 SOL.' }
+          ]);
+        } catch (error) {
+          console.error('Airdrop failed:', error);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', text: '❌ Airdrop failed. Try again later.' }
+          ]);
+        }
+      }
+      else if (command === 'get_nfts') {
+        try {
+          if (!publicKey) {
+            setMessages((prev) => [
+              ...prev,
+              { role: 'system', text: '❌ Wallet not connected. Please connect your wallet.' }
+            ]);
+            return;
+          }
+
+          // Replace this with your actual NFT fetching logic
+          const nftCount = await fetchNFTCount(publicKey);
+
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', text: `🎨 You own ${nftCount.toLocaleString()} NFT${nftCount !== 1 ? 's' : ''}.` }
+          ]);
+        } catch (error) {
+          console.error('NFT fetch failed:', error);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', text: '❌ Failed to fetch NFTs.' }
+          ]);
+        }
+      }
+      else if (command === 'get_transactions') {
+        try {
+          if (!publicKey) {
+            setMessages((prev) => [
+              ...prev,
+              { role: 'system', text: '❌ Wallet not connected. Please connect your wallet.' }
+            ]);
+            return;
+          }
+
+          // Fetch last 10 confirmed signatures for the public key
+          const signatures = await connection.getSignaturesForAddress(publicKey, { limit: 10 });
+
+          if (signatures.length === 0) {
+            setMessages((prev) => [
+              ...prev,
+              { role: 'system', text: 'ℹ️ No recent transactions found.' }
+            ]);
+            return;
+          }
+
+          // Format a message listing recent transaction signatures with dates
+          const formattedTxs = signatures.map(sig => {
+            const date = sig.blockTime ? new Date(sig.blockTime * 1000).toLocaleString() : 'Unknown date';
+            return `• ${sig.signature.slice(0, 8)}... on ${date}`;
+          }).join('\n');
+
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', text: `📜 Last ${signatures.length} transactions:\n${formattedTxs}` }
+          ]);
+        } catch (error) {
+          console.error('Transaction fetch failed:', error);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', text: '❌ Failed to fetch transactions.' }
+          ]);
+        }
+      }
+      else if (command === 'send_sol') {
+        const { amount, to } = parsed;
+
+        if (!amount || !to) {
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', text: '⚠️ Please provide both amount and recipient address.' },
+          ]);
+          return;
+        }
+
+        if (!wallet || !wallet.signTransaction) {
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', text: '❌ Wallet not connected or does not support signing transactions.' },
+          ]);
+          return;
+        }
+
+        try {
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', text: `🔄 Sending ${amount} SOL to ${to} on Testnet...` },
+          ]);
+
+          const toPublicKey = new PublicKey(to);
+          const lamports = Math.round(amount * 1e9);
+
+          const transaction = new Transaction().add(
+            SystemProgram.transfer({
+              fromPubkey: publicKey,
+              toPubkey: toPublicKey,
+              lamports,
+            })
+          );
+
+          transaction.feePayer = publicKey;
+          const { blockhash } = await connection.getLatestBlockhash();
+          transaction.recentBlockhash = blockhash;
+
+          const signedTransaction = await wallet.signTransaction(transaction);
+          const signature = await connection.sendRawTransaction(signedTransaction.serialize());
+
+          await connection.confirmTransaction(signature);
+
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', text: `✅ Sent ${amount} SOL to ${to} on Testnet. Tx Signature: ${signature}` },
+          ]);
+        } catch (error) {
+          console.error('Send SOL failed:', error);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'system', text: `❌ Failed to send SOL: ${error}` },
+          ]);
+        }
+      }
+    }
+    catch (err) {
+      console.error('Failed to parse JSON:', err);
+    }
+  }
 
   return (
-    <div className="h-screen flex flex-col text-[#ffffffe9] ">
+    <div className="h-screen  flex flex-col text-[#ffffffe9] ">
       <Navbar />
       {/* Chat area */}
-       <div className='mt-28 text-left flex justify-center flex-col items-center'>
-
-          <h1 style={{wordSpacing:'0.1em', letterSpacing:'0.06em'}} className='text-xl font-[600]'>Chat With Solana Blockchain</h1>
-          <p className='text-sm text-[#ffffff82]'>A tool to help you perform task on blockchain using nlp.</p>
+      {view == 'chat' && (
+        <div className='w-2xl mx-auto pb-20'>
+          {messages.map((msg, index) => (
+            <div
+              key={index}
+              className={`flex w-full   ${msg.role === 'user' ? 'justify-end mt-4 mb-6' : 'mt-1'}`}>
+              <div className={`rounded-2xl flex  ${msg.role === 'user' ? 'bg-zinc-700  py-3 px-4' : 'bg-transparent text-white/90 px-4'}`}>
+                <p>{msg.text}</p>
+                {/* {(isLoading && msg.role == 'system') && (
+                  <div className="flex mt-4 text-white/60 italic animate-pulse">
+                    <p>Typing...</p>
+                  </div>
+                )} */}
+              </div>
+            </div>
+          ))}
 
         </div>
-      <main className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-
-
-
-          <div className='flex items-center justify-center mt-28 gap-3 flex-wrap max-w-md mx-auto '>
-        <Item text="Send 1 SOL" />
-        <Item text="Show My Balance" />
-        <Item text="Show My NFT" />
-        <Item text="1SOL Value in USDT" />
-        <Item text="Create a token" />
-         <Item text="Price of NFT" />
+      )}
+      {view === 'landing' && (
+        <div className='mt-40 text-left flex justify-center flex-col items-center'>
+          <h1 style={{ wordSpacing: '0.1em', letterSpacing: '0.06em' }} className='text-4xl font-[600]'>Chat With Solana Blockchain</h1>
+          <p className='text-sm pt-2 text-[#ffffff82]'>A tool that help you perform task and talk to blockchain using message.</p>
         </div>
-      </main>
-
+      )}
       {/* Input area */}
-     <div className='relative'>
-      <div className='w-80 h-20 bg-green-400  bottom-[380px] rounded-full left-[620px] blur-[70px]  -z-10 absolute '></div>
-  <form className="
-    p-1 flex gap-3
-    shadow-[0_10px_30px_rgba(0,0,0,0.6)]
-    border border-zinc-600
-    absolute justify-center items-center
-    bottom-96 left-1/2 transform -translate-x-1/2
-    bg-[#202225] rounded-full
-    w-[90%] max-w-lg
-    ring-1 ring-white/10
-    backdrop-blur-sm
-  ">
+      <motion.div
+        className='  w-full  flex mt-8  flex-col items-center'>
+        {view === 'landing' && (
+          <div className='w-96 h-30 bg-radial from-green-600 via-green-600 shadow-2xl to-blue-500  rounded-full  right-1/2 -top-36 translate-y-1/2 transform translate-x-1/2 blur-[100px] -z-10 absolute '></div>
+        )}
+       <motion.div
+  initial={{ y: 50, opacity: 0 }}
+  animate={{ y: 0, opacity: 1 }}
+  transition={{ duration: 0.4, ease: 'easeOut' }}
+  className="fixed bottom-4 w-full flex flex-col items-center z-50"
+>
+  {view === 'landing' && (
+    <div className="w-96 h-30 bg-radial from-green-600 via-green-600 shadow-2xl to-blue-500 rounded-full right-1/2 -top-36 translate-y-1/2 transform translate-x-1/2 blur-[100px] -z-10 absolute"></div>
+  )}
+
+  <div
+    className="
+      p-1 flex gap-3
+      shadow-[0_10px_30px_rgba(0,0,0,0.6)]
+      border border-zinc-600
+      justify-center items-center
+      bg-[#202225] rounded-full
+      w-[90%] max-w-lg
+      ring-1 ring-white/10
+      backdrop-blur-sm
+    "
+  >
     <input
       type="text"
-      value={input}
-      onChange={(e) => setInput(e.target.value)}
+      value={prompt}
+      onChange={(e) => setPrompt(e.target.value)}
       placeholder="Ask something like 'Send 1 SOL to ...'"
-      className="flex-1 px-4 py-3 rounded-xl text-white placeholder-zinc-400 focus:outline-none"
+      className="flex-1 px-6 py-4 rounded-xl text-white text-sm placeholder-zinc-400 focus:outline-none bg-transparent"
     />
     <button
       type="submit"
-      className="bg-gradient-to-r from-green-300 to-green-800 px-3 py-2 mr-1 rounded-full text-white"
+      onClick={hanldeSubmit}
+      className="bg-gradient-to-r from-green-300 to-green-800 hover:from-green-400 hover:border-green-400 border-green-100 px-2 py-2 mr-[6px] rounded-full text-white cursor-pointer"
     >
-      <Send className='text-white' />
+      {isLoading ? <Circle className="text-white/70" /> : <Send className="text-white/70" />}
     </button>
-  </form>
-</div>
+  </div>
+</motion.div>
 
-
+        {
+          view === 'landing' && (
+            <div className='flex items-center justify-center mt-4 gap-3 flex-wrap max-w-md mx-auto '>
+              {exampleCommands.map((command, index) => {
+                return (
+                  <div key={index}>
+                    <Item text={command} onClick={() => setPrompt(command)} />
+                  </div>
+                )
+              })}
+            </div>
+          )
+        }
+      </motion.div>
     </div>
   );
 }
 
 
-function Item({text}: {text: string}) {
-  return(
-      <div
-
-      className='text-xs text-center  bg-green-800/30 text-green-500 w-fit rounded-full px-2 py-1 border-green-400 border-1 items-center flex justify-center'
-      >{text}</div>
+function Item({ text, onClick }: { text: string, onClick: (text: string) => void }) {
+  return (
+    <div
+      onClick={() => onClick(text)}
+      className='text-xs text-center cursor-pointer  bg-green-800/30 text-green-500 w-fit rounded-full px-2 py-1 border-green-400 border-1 items-center flex justify-center'
+    >{text}</div>
   )
 }
