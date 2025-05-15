@@ -268,9 +268,9 @@ export default function HomePage() {
           transition={{ duration: 0.4, ease: 'easeOut' }}
           className="fixed bottom-4 w-full flex flex-col items-center z-50"
         >
-          {view === 'chat' && (
+
             <div className="w-96 h-30 bg-radial from-green-600 via-green-600 shadow-2xl to-blue-500 rounded-full right-1/2 -top-36 translate-y-1/2 transform translate-x-1/2 blur-[100px] -z-10 absolute"></div>
-          )}
+
 
           <div
             className="
